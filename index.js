@@ -4,11 +4,8 @@ const axios = require("axios");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 
-
-// Load environment variables (only for local development)
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
-}
+// Load environment variables from .env file
+require("dotenv").config();
 
 const app = express();
 
@@ -16,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://hirelink-brown.vercel.app",
+    origin: process.env.FRONTEND_URL || "https://hirelink-brown.vercel.app", // Allow frontend to access the API
     methods: "GET,POST,PUT,DELETE",
   })
 );
@@ -26,7 +23,10 @@ const mongooseUri = process.env.MONGODB_URI;
 mongoose
   .connect(mongooseUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Could not connect to MongoDB...", err));
+  .catch((err) => {
+    console.error("Could not connect to MongoDB...", err);
+    process.exit(1); // Exit if MongoDB connection fails
+  });
 
 // Job Schema
 const jobSchema = new mongoose.Schema({
@@ -37,7 +37,7 @@ const jobSchema = new mongoose.Schema({
 });
 const Job = mongoose.model("Job", jobSchema);
 
-// User Schema
+// User Schema for authentication
 const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
@@ -58,10 +58,13 @@ const verifyToken = async (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const response = await axios.get(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+    // Use Supabase API to verify the token
+    const supabaseURL = process.env.SUPABASE_URL;
+    const supabaseApiKey = process.env.SUPABASE_API_KEY;
+    const response = await axios.get(`${supabaseURL}/auth/v1/user`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        apikey: process.env.SUPABASE_API_KEY,
+        apikey: supabaseApiKey,
       },
     });
 
@@ -79,7 +82,7 @@ const verifyToken = async (req, res, next) => {
 
 // Routes
 
-// Test Route
+// Test route
 app.get("/", (req, res) => {
   res.send("Express app is running");
 });
@@ -110,9 +113,7 @@ app.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-    res.status(200).json({ message: "Login successful", token });
+    res.status(200).json({ message: "Login successful", user });
   } catch (error) {
     res.status(500).json({ message: "Error during login", error });
   }
@@ -135,7 +136,7 @@ app.post("/add-job", verifyToken, async (req, res) => {
   }
 });
 
-// Fetch All Jobs
+// Fetch all jobs
 app.get("/all-jobs", async (req, res) => {
   try {
     const jobs = await Job.find();
@@ -145,7 +146,7 @@ app.get("/all-jobs", async (req, res) => {
   }
 });
 
-// Fetch Latest Jobs
+// Fetch jobs posted in the last 24 hours
 app.get("/latest-jobs", async (req, res) => {
   try {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -156,5 +157,5 @@ app.get("/latest-jobs", async (req, res) => {
   }
 });
 
-// Export the app
+// Export the app (do not use app.listen for Vercel)
 module.exports = app;
