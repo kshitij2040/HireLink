@@ -11,12 +11,31 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+// app.use(
+//   cors({
+//     origin: process.env.FRONTEND_URL || "https://hirelink-brown.vercel.app", // Allow frontend to access the API
+//     methods: "GET,POST,PUT,DELETE",
+//   })
+// );
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://hirelink-brown.vercel.app", // Allow frontend to access the API
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "https://hirelink-brown.vercel.app", // Frontend deployment URL
+        "http://localhost:3000",            // Local development
+      ];
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: "GET,POST,PUT,DELETE",
+    credentials: true, // Allow cookies if needed
   })
 );
+
 
 // MongoDB Connection
 const mongooseUri = process.env.MONGODB_URI;
