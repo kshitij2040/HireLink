@@ -155,15 +155,18 @@ app.post("/add-job", verifyToken, async (req, res) => {
   }
 });
 
-// Fetch all jobs
+
+// Fetch all jobs (exclude jobs older than 30 days)
 app.get("/all-jobs", async (req, res) => {
   try {
-    const jobs = await Job.find().sort({ postedAt:-1});
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); 
+    const jobs = await Job.find({ postedAt: { $gte: thirtyDaysAgo } }).sort({ postedAt: -1 }); 
     res.status(200).json(jobs);
   } catch (error) {
     res.status(500).json({ message: "Error fetching jobs", error });
   }
 });
+
 
 // Fetch jobs posted in the last 24 hours
 app.get("/latest-jobs", async (req, res) => {
