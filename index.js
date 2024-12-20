@@ -21,30 +21,21 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: "GET,POST,PUT,DELETE",
-    credentials: true, // Allow cookies if needed
-    allowedHeaders: ["Content-Type", "Authorization"], // Explicitly specify allowed headers
+    origin: ["https://hirelink-brown.vercel.app"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
 // Added preflight request handling globally
-app.options("*", cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+app.options("*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", "https://hirelink-brown.vercel.app");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.sendStatus(204);
+});
+
 
 // MongoDB Connection
 const mongooseUri = process.env.MONGODB_URI;
