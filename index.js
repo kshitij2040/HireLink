@@ -158,7 +158,7 @@ app.post("/add-job", verifyToken, async (req, res) => {
 // Fetch all jobs
 app.get("/all-jobs", async (req, res) => {
   try {
-    const jobs = await Job.find();
+    const jobs = await Job.find().sort({ postedAt:-1});
     res.status(200).json(jobs);
   } catch (error) {
     res.status(500).json({ message: "Error fetching jobs", error });
