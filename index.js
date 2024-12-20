@@ -30,11 +30,21 @@ app.use(
     },
     methods: "GET,POST,PUT,DELETE",
     credentials: true, // Allow cookies if needed
+    allowedHeaders: ["Content-Type", "Authorization"], // Explicitly specify allowed headers
   })
 );
 
 // Added preflight request handling globally
-app.options("*", cors());
+app.options("*", cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
 // MongoDB Connection
 const mongooseUri = process.env.MONGODB_URI;
