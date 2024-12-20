@@ -11,30 +11,30 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-
-// Updated CORS Configuration
-// Added proper handling for allowed origins and preflight requests
-const allowedOrigins = [
-  "https://hirelink-brown.vercel.app", // Frontend deployment URL
-  "http://localhost:3000",            // Local development
-];
-
+// app.use(
+//   cors({
+//     origin: process.env.FRONTEND_URL || "https://hirelink-brown.vercel.app", // Allow frontend to access the API
+//     methods: "GET,POST,PUT,DELETE",
+//   })
+// );
 app.use(
   cors({
-    origin: ["https://hirelink-brown.vercel.app"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "https://hirelink-brown.vercel.app", // Frontend deployment URL
+        "http://localhost:3000",            // Local development
+      ];
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true, // Allow cookies if needed
   })
 );
-
-// Added preflight request handling globally
-app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", "https://hirelink-brown.vercel.app");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.sendStatus(204);
-});
 
 
 // MongoDB Connection
@@ -95,7 +95,7 @@ const verifyToken = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("Error verifying token:", err);
-    return res.status(401).json({ message: "Invalid or check expired token" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
@@ -147,14 +147,14 @@ app.post("/add-job", verifyToken, async (req, res) => {
   }
 
   try {
-    // Create a new job object and save it to the database
-    const job = new Job({ title, description, link });
-    await job.save();
-    res.status(201).json({ message: "Job added successfully", job });
-  } catch (err) {
-    res.status(500).json({ message: "Error adding job", err });
+    const newJob = new Job({ title, description, link });
+    await newJob.save();
+    res.status(201).json({ message: "Job added successfully!", job: newJob });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding job", error });
   }
 });
+
 
 // Fetch all jobs (exclude jobs older than 30 days)
 app.get("/all-jobs", async (req, res) => {
@@ -166,6 +166,7 @@ app.get("/all-jobs", async (req, res) => {
     res.status(500).json({ message: "Error fetching jobs", error });
   }
 });
+
 
 // Fetch jobs posted in the last 24 hours
 app.get("/latest-jobs", async (req, res) => {
