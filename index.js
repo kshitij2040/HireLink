@@ -19,7 +19,7 @@ app.use(
 // MongoDB Connection
 const mongooseUri = process.env.MONGODB_URI;
 mongoose
-  .connect(mongooseUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(mongooseUri)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => {
     console.error("Could not connect to MongoDB...", err);
@@ -161,5 +161,5 @@ app.get("/latest-jobs", async (req, res) => {
   }
 });
 
-// app.listen(4000, () => console.log("Server running on port 4000"));
+app.listen(4000, () => console.log("Server running on port 4000"));
 module.exports = app;
