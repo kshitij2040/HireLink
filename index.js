@@ -11,20 +11,17 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL || "https://hirelink-brown.vercel.app", // Allow frontend to access the API
-//     methods: "GET,POST,PUT,DELETE",
-//   })
-// );
+
+// Updated CORS Configuration
+// Added proper handling for allowed origins and preflight requests
+const allowedOrigins = [
+  "https://hirelink-brown.vercel.app", // Frontend deployment URL
+  "http://localhost:3000",            // Local development
+];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "https://hirelink-brown.vercel.app", // Frontend deployment URL
-        "http://localhost:3000",            // Local development
-      ];
-
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -36,6 +33,8 @@ app.use(
   })
 );
 
+// Added preflight request handling globally
+app.options("*", cors());
 
 // MongoDB Connection
 const mongooseUri = process.env.MONGODB_URI;
@@ -156,7 +155,6 @@ app.post("/add-job", verifyToken, async (req, res) => {
   }
 });
 
-
 // Fetch all jobs (exclude jobs older than 30 days)
 app.get("/all-jobs", async (req, res) => {
   try {
@@ -167,7 +165,6 @@ app.get("/all-jobs", async (req, res) => {
     res.status(500).json({ message: "Error fetching jobs", error });
   }
 });
-
 
 // Fetch jobs posted in the last 24 hours
 app.get("/latest-jobs", async (req, res) => {
