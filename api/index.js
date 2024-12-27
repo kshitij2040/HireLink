@@ -114,8 +114,8 @@ app.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id, email: user.email }, "yourSecretKey", { expiresIn: '1h' });
+    // // Generate JWT token
+    // const token = jwt.sign({ id: user._id, email: user.email }, "yourSecretKey", { expiresIn: '1h' });
 
     res.status(200).json({ message: "Login successful", token });
   } catch (error) {
@@ -161,5 +161,5 @@ app.get("/latest-jobs", async (req, res) => {
   }
 });
 
-// app.listen(4000, () => console.log("Server running on port 4000"));
-module.exports = app;
+app.listen(4000, () => console.log("Server running on port 4000"));
+// module.exports = app;
